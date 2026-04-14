@@ -21,7 +21,7 @@ graph LR
 
 This is the second SIEM in the lab, deployed alongside Wazuh. The goal was to run the same three attack simulations through a different detection platform and build detections using SPL (Splunk's query language) rather than Wazuh's rule engine.
 
-Running two SIEMs against the same attacks shows how the same event data looks through different lenses: Wazuh correlates automatically using pre-built rules, Splunk requires you to write the queries yourself. Both approaches matter in real environments.
+Running two SIEMs against the same attacks shows how the same event data looks through different lenses: Wazuh correlates automatically using pre-built rules, Splunk requires you to write the queries yourself.
 
 ---
 
