@@ -8,10 +8,10 @@ Splunk Enterprise 9.3.1 deployed on Linux with a Universal Forwarder on a Window
 
 ```mermaid
 graph LR
+    C[Windows Security Logs<br/>EventCode 4625, 4720] --> A
+    D[Windows System Logs] --> A
+    E[Sysmon Logs<br/>EventCode 1] --> A
     A[Windows 11 VM<br/>10.0.0.20<br/>Universal Forwarder] -->|port 9997| B[Splunk Enterprise<br/>VM 102 - 10.0.0.30]
-    A -->|forwards| C[Windows Security Logs<br/>EventCode 4625, 4720]
-    A -->|forwards| D[Windows System Logs]
-    A -->|forwards| E[Sysmon Logs<br/>EventCode 1]
     B --> F[Security Monitoring Dashboard<br/>3 panels]
 ```
 
