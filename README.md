@@ -8,7 +8,7 @@ Splunk Enterprise 9.3.1 deployed on Linux with a Universal Forwarder on a Window
 
 ```mermaid
 graph LR
-    A[Windows 11 VM<br/>10.0.0.20<br/>Universal Forwarder] -->|port 9997| B[Splunk Enterprise<br/>VM 102 — 10.0.0.30]
+    A[Windows 11 VM<br/>10.0.0.20<br/>Universal Forwarder] -->|port 9997| B[Splunk Enterprise<br/>VM 102 - 10.0.0.30]
     A -->|forwards| C[Windows Security Logs<br/>EventCode 4625, 4720]
     A -->|forwards| D[Windows System Logs]
     A -->|forwards| E[Sysmon Logs<br/>EventCode 1]
@@ -17,11 +17,11 @@ graph LR
 
 ---
 
-## What this is
+## Overview
 
 This is the second SIEM in the lab, deployed alongside Wazuh. The goal was to run the same three attack simulations through a different detection platform and build detections using SPL (Splunk's query language) rather than Wazuh's rule engine.
 
-Running two SIEMs against the same attacks shows how the same event data looks through different lenses — Wazuh correlates automatically using pre-built rules, Splunk requires you to write the queries yourself. Both approaches matter in real environments.
+Running two SIEMs against the same attacks shows how the same event data looks through different lenses: Wazuh correlates automatically using pre-built rules, Splunk requires you to write the queries yourself. Both approaches matter in real environments.
 
 ---
 
@@ -33,7 +33,7 @@ Running two SIEMs against the same attacks shows how the same event data looks t
 | Splunk server | VM 102, 10.0.0.30, 4GB RAM, 2 CPU, 40GB disk |
 | Universal Forwarder | VM 103, 10.0.0.20 (same Windows VM as Wazuh agent) |
 | Log sources | Windows Security, Windows System, Sysmon |
-| Network | Isolated lab — 10.0.0.0/24 behind OPNsense |
+| Network | Isolated lab, 10.0.0.0/24 behind OPNsense |
 
 ---
 
@@ -97,7 +97,9 @@ SPL query showing event counts by sourcetype. Windows Security, Windows System, 
 ### 2. Brute force detection — EventCode 4625 timechart
 ![Brute force](screenshots/brute_force.png)
 
-Timechart of EventCode 4625 (failed logon) during the brute force simulation. The spike shows 21 failed logins in a short window — exactly what was simulated. SPL's `timechart` function visualizes the volume over time, which makes the pattern obvious.
+Timechart of EventCode 4625 (failed logon) during the brute force simulation. The spike shows 21 failed logins in a short window, exactly what was simulated. SPL's `timechart` function visualizes the volume over time, which makes the pattern obvious.
+
+**Response:** The timechart makes the attack window precise. Export the time range as a filter, then run a follow-up query for EventCode=4624 against the same window to check whether any attempt succeeded.
 
 ---
 
@@ -106,12 +108,16 @@ Timechart of EventCode 4625 (failed logon) during the brute force simulation. Th
 
 Table output showing EventCode 4720 (user account created) from running `net user hacker`. The table shows the timestamp, event code, username created, and the computer it happened on. One row, zero ambiguity.
 
+**Response:** Disable the account immediately. Then pivot on the timestamp and correlate against Sysmon EventCode 1 in the same window to trace what process ran the `net user` command and how it got there.
+
 ---
 
 ### 4. Encoded PowerShell — Sysmon EventCode 1
 ![Encoded command](screenshots/encoded_command.png)
 
-Sysmon EventCode 1 results filtered for `EncodedCommand` in the command line. The full encoded argument is visible in the CommandLine field, along with the parent process. This is the forensic data that makes encoded PowerShell detectable — and it only exists because Sysmon is installed.
+Sysmon EventCode 1 results filtered for `EncodedCommand` in the command line. The full encoded argument is visible in the CommandLine field, along with the parent process. This is the forensic data that makes encoded PowerShell detectable, and it only exists because Sysmon is installed.
+
+**Response:** Decode the Base64 string in the CommandLine field to understand the payload. Then run follow-up queries for EventCode 11 (FileCreate) and EventCode 3 (NetworkConnect) from the same process to see what was dropped and what was contacted externally.
 
 ---
 
